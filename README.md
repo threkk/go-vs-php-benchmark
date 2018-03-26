@@ -21,7 +21,7 @@ In order to simulate the business case, the data has to be formated in three dif
 
 1. `[(x1, y1, z11), (x2, y2, z22), (x3, y3, z33)]`
 2. `[x1 => [y1 => z11, y2 => z12], x2 => [y1 => z21, y2 => z22]]`
-3. `[ [#, x1, x2, x3], [y1, z11, z21, z31], [y2, z12, z22, z32], [y3, z13, z23, z33] ]`
+3. `[ [x1, x2, x3], [z11, z21, z31], [z12, z22, z32], [z13, z23, z33] ]`
 
 ## Requirements
 - Only standard library.
