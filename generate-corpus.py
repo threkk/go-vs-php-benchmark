@@ -46,6 +46,10 @@ def run(tuples_file, x_file):
             for value in values:
                 wtf.write('%s\n' % value)
 
+        print('Total amount of x values: %d' % len(words))
+        print('Total amount of y values: %d' % len(ys))
+        print('Total amount of tuples: %d' % len(values))
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__,

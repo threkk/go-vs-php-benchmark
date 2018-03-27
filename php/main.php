@@ -5,6 +5,7 @@ require_once('./php/loader.php');
 const CORPUS = './corpus';
 const X = './corpus-x';
 
+ini_set('memory_limit', '-1');
 
 echo '=> Importing datasets.'.PHP_EOL;
 $corpus = loadCorpus(CORPUS);
