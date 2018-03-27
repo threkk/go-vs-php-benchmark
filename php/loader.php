@@ -8,10 +8,17 @@
  */
 function loadX ($route)
 {
-    $file = file_get_contents($route);
-    $lines = array_filter(explode(PHP_EOL, $file), function($line) {
-        return $line !== '';
-    });
+    /* $dir = realpath(dirname(__FILE__).'/../').$route; */
+    $handler = fopen($route, 'r');
+    $lines = [];
+    if ($handler) {
+        while(($line = fgets($handler)) !== false) {
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+        }
+        fclose($handler);
+    }
     return $lines;
 }
 
@@ -24,18 +31,22 @@ function loadX ($route)
  */
 function loadCorpus($route)
 {
-    $file = file_get_contents($route);
-    $lines = array_filter(explode(PHP_EOL, $file), function($line) {
-        return $line !== '';
-    });
+    /* $dir = realpath(dirname(__FILE__).'/../').$route; */
+    $handler = fopen($route, 'r');
     $entries = [];
-    foreach ($lines as $line) {
-        $entry = explode(' ', $line);
-        $entries[] = [
-            'x' => $entry[0],
-            'y' => intval($entry[1]),
-            'value' => $entry[2]
-        ];
+
+    if ($handler) {
+        while(($line = fgets($handler)) !== false) {
+            if ($line !== '') {
+                $entry = explode(' ', $line);
+                $entries[] = [
+                    'x' => $entry[0],
+                    'y' => intval($entry[1]),
+                    'value' => $entry[2]
+                ];
+            }
+        }
+        fclose($handler);
     }
 
     shuffle($entries);
