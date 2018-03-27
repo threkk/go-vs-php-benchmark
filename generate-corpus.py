@@ -27,14 +27,14 @@ def run(tuples_file, x_file):
         all_words = rwf.read().splitlines()
         shuffle(all_words)
 
-        words = all_words[:200]
-        assert len(words) == 200
+        words = all_words[:2000]
+        assert len(words) == 2000
 
-        ys = range(0, 500)
-        assert len(ys) == 500
+        ys = range(0, 5000)
+        assert len(ys) == 5000
 
         values = ['%s %d x=%s,y=%d' % (x, y, x, y) for x in words for y in ys]
-        assert len(values) == 100000
+        assert len(values) == 10000000
 
         shuffle(values)
 

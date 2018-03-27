@@ -11,7 +11,7 @@ import (
 // Tuple - 3 fields tuple.
 type Tuple struct {
 	X     string
-	Y     uint16
+	Y     uint64
 	Value string
 }
 
@@ -49,7 +49,7 @@ func LoadCorpus(route string) ([]Tuple, error) {
 	for scanner.Scan() {
 		entry := strings.Fields(scanner.Text())
 		x := entry[0]
-		y64, err := strconv.ParseInt(entry[1], 10, 16)
+		y64, err := strconv.ParseInt(entry[1], 10, 64)
 
 		if err != nil && y64 > 0 {
 			return nil, fmt.Errorf("Parsing/conversion error in %x", entry)
@@ -57,7 +57,7 @@ func LoadCorpus(route string) ([]Tuple, error) {
 
 		// We know that numbers are positive integers up to 500. We can use
 		// uint16 for increased performance.
-		y := uint16(y64)
+		y := uint64(y64)
 
 		value := entry[2]
 		tuple := Tuple{X: x, Y: y, Value: value}
