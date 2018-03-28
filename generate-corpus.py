@@ -22,19 +22,19 @@ from argparse import RawTextHelpFormatter
 WORD_FILE = '/usr/share/dict/words'
 
 
-def run(tuples_file, x_file):
+def run(tuples_file, x_file, len_x, len_y):
     with open(WORD_FILE) as rwf:
         all_words = rwf.read().splitlines()
         shuffle(all_words)
 
-        words = all_words[:2000]
-        assert len(words) == 2000
+        words = all_words[:len_x]
+        assert len(words) == len_x
 
-        ys = range(0, 5000)
-        assert len(ys) == 5000
+        ys = range(0, len_y)
+        assert len(ys) == len_y
 
         values = ['%s %d x=%s,y=%d' % (x, y, x, y) for x in words for y in ys]
-        assert len(values) == 10000000
+        assert len(values) == len_x * len_y
 
         shuffle(values)
 
@@ -54,9 +54,15 @@ def run(tuples_file, x_file):
 if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__,
                             formatter_class=RawTextHelpFormatter)
-    parser.add_argument('corpus', help='Name of the output file.', nargs='?',
-                        default='corpus')
+    parser.add_argument('-x', '--x', metavar='x', action='store', default=2000,
+                        type=int, help='Amount of words to use. Default: 2000')
+    parser.add_argument('-y', '--y', metavar='y', action='store', default=5000,
+                        type=int, help='Amount of y elements. Default: 5000')
+    parser.add_argument('corpus', default='corpus', nargs='?',
+                        help='Name of the output file.')
     args = parser.parse_args()
     corpus = args.corpus
-    x = '%s-x' % corpus
-    run(corpus, x)
+    x = args.x
+    y = args.y
+    corpus_x = '%s-x' % corpus
+    run(corpus, corpus_x, x, y)

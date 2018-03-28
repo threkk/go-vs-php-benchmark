@@ -35,6 +35,23 @@ func uniqueY(tuples []Tuple) []uint64 {
 	return uniq
 }
 
+func compare(a, b []string) bool {
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func init() {
 	fmt.Printf("=> Importing the datasets.\n")
 	xs = LoadX(xRoute)
@@ -73,8 +90,8 @@ func main() {
 	for i := range output {
 		output[i] = make([]string, len(xs))
 	}
-	copy(output[0], xs)
 
+	copy(output[0], xs)
 	for x, yValue := range table {
 		xIndex := indexOf(xs, x)
 
@@ -83,16 +100,35 @@ func main() {
 		}
 
 		for y, value := range yValue {
-			output[y][xIndex] = value
+			output[y+1][xIndex] = value
 		}
 	}
 
 	diffTrans := time.Since(startTrans)
-	diffTotal := time.Since(startSort)
 	fmt.Printf("=> Transpose finished!\n")
 
+	fmt.Printf("=> Ensuring the validity of the table.\n")
+	startCheck := time.Now()
+	header, tester := output[0], output[1:]
+	if !compare(header, xs) {
+		panic(fmt.Errorf("=> Transpose error: header => %v xs => %v", header, xs))
+	}
+	for y, xValues := range tester {
+		for xIndex, value := range xValues {
+			x := xs[xIndex]
+			computed := fmt.Sprintf("x=%s,y=%d", x, y)
+			if value != computed {
+				panic(fmt.Errorf("=> Transpose error: value => %s computed => %s", value, computed))
+			}
+		}
+	}
+
+	diffCheck := time.Since(startCheck)
+	diffTotal := time.Since(startCheck)
 	fmt.Printf("\n")
 	fmt.Printf("Total execution time: %f\n", diffTotal.Seconds())
+	fmt.Printf("---\n")
 	fmt.Printf("Sorting execution time: %f\n", diffSort.Seconds())
 	fmt.Printf("Transpose execution time: %f\n", diffTrans.Seconds())
+	fmt.Printf("Check execution time: %f\n", diffCheck.Seconds())
 }

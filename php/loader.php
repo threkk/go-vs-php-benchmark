@@ -8,13 +8,12 @@
  */
 function loadX ($route)
 {
-    /* $dir = realpath(dirname(__FILE__).'/../').$route; */
     $handler = fopen($route, 'r');
     $lines = [];
     if ($handler) {
         while(($line = fgets($handler)) !== false) {
             if ($line !== '') {
-                $lines[] = $line;
+                $lines[] = trim($line);
             }
         }
         fclose($handler);
@@ -31,7 +30,6 @@ function loadX ($route)
  */
 function loadCorpus($route)
 {
-    /* $dir = realpath(dirname(__FILE__).'/../').$route; */
     $handler = fopen($route, 'r');
     $entries = [];
 
@@ -40,9 +38,9 @@ function loadCorpus($route)
             if ($line !== '') {
                 $entry = explode(' ', $line);
                 $entries[] = [
-                    'x' => $entry[0],
+                    'x' => trim($entry[0]),
                     'y' => intval($entry[1]),
-                    'value' => $entry[2]
+                    'value' => trim($entry[2])
                 ];
             }
         }

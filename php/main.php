@@ -5,6 +5,7 @@ require_once('./php/loader.php');
 const CORPUS = './corpus';
 const X = './corpus-x';
 
+// Avoids running out of memory.
 ini_set('memory_limit', '-1');
 
 echo '=> Importing datasets.'.PHP_EOL;
@@ -15,10 +16,10 @@ $xs = loadX(X);
 echo '=> Placing the elements in the intermediate table.'.PHP_EOL;
 $startSort = microtime(true);
 
-// Set up the table in which we will place the values.
+// Set up the table in which we will place the values
+sort($xs);
 $table = [];
 foreach ($xs as $x) {
-    // Initialise the arrays.
     $table[$x] = [];
 }
 
@@ -37,7 +38,6 @@ foreach ($corpus as $element) {
 
 // Ordering the entries. Currently they are grouped so they can be safely
 // ordered.
-ksort($table);
 foreach ($table as $key => $row) {
     ksort($table[$key]);
 }
@@ -55,25 +55,29 @@ $output[0] = $xs;
 
 foreach ($table as $x => $yvalue) {
     foreach ($yvalue as $y => $value) {
+        if (!isset($output[$y + 1])) {
+            $output[$y + 1] = [];
+        }
         $xIndex = array_search($x, $xs);
         $output[$y + 1][$xIndex] = $value; 
     }
 }
-
 
 echo '=> Transpose finished!'.PHP_EOL;
 $endTrans = microtime(true);
 
 
 echo '=> Ensuring the validity of the table'.PHP_EOL;
+$startCheck = microtime(true);
+
 // Remove the header.
-$trans = $output; 
-$header = array_shift($trans);
+$tester = $output; 
+$header = array_shift($tester);
 if ($header !== $xs) {
     echo '=> Transpose error: header => '.$header.' xs => '.$xs;
 }
 
-foreach($trans as $yIndex => $values) {
+foreach($tester as $yIndex => $values) {
     foreach ($values as $xIndex => $v) {
         $x = $xs[$xIndex];
 
@@ -84,12 +88,17 @@ foreach($trans as $yIndex => $values) {
         }
     }
 }
+$endCheck = microtime(true);
 
-$diff = $endTrans - $startSort;
+
+$diff = $endCheck - $startSort;
 $diffSort = $endSort - $startSort;
 $diffTrans = $endTrans - $startTrans;
+$diffCheck = $endCheck - $startCheck;
 echo PHP_EOL;
 echo 'Total execution time: '.$diff.PHP_EOL;
+echo '---'.PHP_EOL;
 echo 'Sorting execution time: '.$diffSort.PHP_EOL;
 echo 'Transpose execution time: '.$diffTrans.PHP_EOL;
+echo 'Check execution time: '.$diffCheck.PHP_EOL;
 // End of main.php
