@@ -3,12 +3,17 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
+	"sync"
 	"time"
 )
 
 const corpusRoute = "./corpus"
 const xRoute = "./corpus-x"
+
+var numCPU = runtime.NumCPU()
+var lock = sync.RWMutex{}
 
 var xs []string
 var corpus []Tuple
@@ -66,20 +71,47 @@ func main() {
 	fmt.Printf("=> Placing the elements in the intermediate table.\n")
 	startSort := time.Now()
 
+	// Sorting the keys using the stdlib.
+	sort.Strings(xs)
+
 	// We calculate the amount of Y. Very much worth the computational cost.
 	ys := uniqueY(corpus)
 
 	// Size of the keys space is the same as the x's
 	table := make(map[string]map[uint64]string, len(xs))
+	for _, x := range xs {
+		table[x] = make(map[uint64]string, len(ys))
+	}
+
+	// SORT: PARALLEL VERSION
+	// Maps require a lock for write operations.
+	// cPlace := make(chan bool, numCPU)
+	// qCorpus := len(corpus) / numCPU
+	// place := func(index int, end int, t map[string]map[uint64]string, c chan bool) {
+	// 	lock.Lock()
+	// 	for ; index < end; index++ {
+	// 		tuple := corpus[index]
+	// 		t[tuple.X][tuple.Y] = tuple.Value
+	// 	}
+	// 	lock.Unlock()
+	// 	c <- true
+	// }
+
+	// for i := 0; i < numCPU; i++ {
+	// 	go place(i*qCorpus, (i+1)*qCorpus, table, cPlace)
+	// }
+
+	// for i := 0; i < numCPU; i++ {
+	// 	<-cPlace
+	// }
+
+	// SORT: LINEAR VERSION
+	// Linear version seems to be better due to the cost of locking and
+	// unlocking the map.
 	for _, tuple := range corpus {
-		_, isset := table[tuple.X]
-		if !isset {
-			table[tuple.X] = make(map[uint64]string, len(ys))
-		}
 		table[tuple.X][tuple.Y] = tuple.Value
 	}
 
-	sort.Strings(xs)
 	diffSort := time.Since(startSort)
 	fmt.Printf("=> Sorting finished.\n")
 
@@ -92,17 +124,45 @@ func main() {
 	}
 
 	copy(output[0], xs)
-	for x, yValue := range table {
-		xIndex := indexOf(xs, x)
 
-		if xIndex < 0 {
-			panic(fmt.Errorf("Invalid value: %s", x))
-		}
+	// TRANSPOSE: PARALLEL VERSION
+	cTrans := make(chan bool, numCPU)
+	qTrans := len(xs) / numCPU
+	transpose := func(keys []string, out [][]string, channel chan bool) {
+		for _, x := range keys {
+			yValue := table[x]
+			xIndex := indexOf(xs, x)
+			if xIndex < 0 {
+				panic(fmt.Errorf("Invalid value: %s", x))
+			}
 
-		for y, value := range yValue {
-			output[y+1][xIndex] = value
+			for y, value := range yValue {
+				out[y+1][xIndex] = value
+			}
 		}
+		channel <- true
 	}
+
+	for i := 0; i < numCPU; i++ {
+		keys := xs[i*qTrans : (i+1)*qTrans]
+		go transpose(keys, output, cTrans)
+	}
+
+	for i := 0; i < numCPU; i++ {
+		<-cTrans
+	}
+
+	// TRANSPOSE: LINEAR VERSION.
+	// for x, yValue := range table {
+	// 	xIndex := indexOf(xs, x)
+	// 	if xIndex < 0 {
+	// 		panic(fmt.Errorf("Invalid value: %s", x))
+	// 	}
+
+	// 	for y, value := range yValue {
+	// 		output[y+1][xIndex] = value
+	// 	}
+	// }
 
 	diffTrans := time.Since(startTrans)
 	fmt.Printf("=> Transpose finished!\n")
@@ -113,6 +173,9 @@ func main() {
 	if !compare(header, xs) {
 		panic(fmt.Errorf("=> Transpose error: header => %v xs => %v", header, xs))
 	}
+
+	// TODO: Check parallel version
+
 	for y, xValues := range tester {
 		for xIndex, value := range xValues {
 			x := xs[xIndex]
@@ -124,7 +187,7 @@ func main() {
 	}
 
 	diffCheck := time.Since(startCheck)
-	diffTotal := time.Since(startCheck)
+	diffTotal := time.Since(startSort)
 	fmt.Printf("\n")
 	fmt.Printf("Total execution time: %f\n", diffTotal.Seconds())
 	fmt.Printf("---\n")
