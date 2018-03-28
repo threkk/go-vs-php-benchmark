@@ -127,7 +127,7 @@ func main() {
 
 	// TRANSPOSE: PARALLEL VERSION
 	cTrans := make(chan bool, numCPU)
-	qTrans := len(xs) / numCPU
+	qxs := len(xs) / numCPU
 	transpose := func(keys []string, out [][]string, channel chan bool) {
 		for _, x := range keys {
 			yValue := table[x]
@@ -144,7 +144,7 @@ func main() {
 	}
 
 	for i := 0; i < numCPU; i++ {
-		keys := xs[i*qTrans : (i+1)*qTrans]
+		keys := xs[i*qxs : (i+1)*qxs]
 		go transpose(keys, output, cTrans)
 	}
 
@@ -174,17 +174,41 @@ func main() {
 		panic(fmt.Errorf("=> Transpose error: header => %v xs => %v", header, xs))
 	}
 
-	// TODO: Check parallel version
-
-	for y, xValues := range tester {
-		for xIndex, value := range xValues {
-			x := xs[xIndex]
-			computed := fmt.Sprintf("x=%s,y=%d", x, y)
-			if value != computed {
-				panic(fmt.Errorf("=> Transpose error: value => %s computed => %s", value, computed))
+	// CHECK: PARALLEL VERSION
+	cCheck := make(chan bool)
+	qys := len(ys) / numCPU
+	check := func(y int, end int, test [][]string, channel chan bool) {
+		for ; y < end; y++ {
+			xValues := test[y]
+			for xIndex, value := range xValues {
+				x := xs[xIndex]
+				computed := fmt.Sprintf("x=%s,y=%d", x, y)
+				if value != computed {
+					panic(fmt.Errorf("=> Transpose error: value => %s computed => %s", value, computed))
+				}
 			}
 		}
+		channel <- true
 	}
+
+	for i := 0; i < numCPU; i++ {
+		go check(i*qys, (i+1)*qys, tester, cCheck)
+	}
+
+	for i := 0; i < numCPU; i++ {
+		<-cCheck
+	}
+
+	// CHECK: SERIAL VERSION
+	// 	for y, xValues := range tester {
+	// 		for xIndex, value := range xValues {
+	// 			x := xs[xIndex]
+	// 			computed := fmt.Sprintf("x=%s,y=%d", x, y)
+	// 			if value != computed {
+	// 				panic(fmt.Errorf("=> Transpose error: value => %s computed => %s", value, computed))
+	// 			}
+	// 		}
+	// 	}
 
 	diffCheck := time.Since(startCheck)
 	diffTotal := time.Since(startSort)
