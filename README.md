@@ -31,3 +31,37 @@ In order to simulate the business case, the data has to be formated in three dif
   total, there will be 100000 tuples.
 - The `x` values are already known.
 - The list of tuples is shuffled.
+
+## How to run (and some results)
+```
+$ python3 generate-corpus.py -x 2000 -y 5000
+Total amount of x values: 2000
+Total amount of y values: 5000
+Total amount of tuples: 10000000
+$ php php/main.php
+=> Importing datasets.
+=> Placing the elements in the intermediate table.
+=> Sorting finished!
+=> Starting transpose of the table to its final form.
+=> Transpose finished!
+=> Ensuring the validity of the table
+
+Total execution time: 245.74692201614
+---
+Sorting execution time: 168.59820103645
+Transpose execution time: 68.297261953354
+Check execution time: 8.8513069152832
+$ go run go/main.go go/loader.go
+=> Importing the datasets.
+=> Placing the elements in the intermediate table.
+=> Sorting finished.
+=> Starting transpose of the table to its final form.
+=> Transpose finished!
+=> Ensuring the validity of the table.
+
+Total execution time: 8.476577
+---
+Sorting execution time: 4.507947
+Transpose execution time: 0.294785
+Check execution time: 3.673732
+```
